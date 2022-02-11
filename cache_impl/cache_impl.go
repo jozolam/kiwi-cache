@@ -24,15 +24,14 @@ type cache struct {
 }
 
 type cacheShard struct {
-	lock  *sync.Mutex
+	lock  *sync.RWMutex
 	cache *map[int]string
 }
 
 func (c *cache) Get(id int) (string, error) {
 	cs := c.cache[calculateShardIndex(id)]
 
-	cs.lock.Lock()
-	defer cs.lock.Unlock()
+	cs.lock.RLock()
 
 	v, f := (*(cs.cache))[id]
 	if f == false {
@@ -40,10 +39,13 @@ func (c *cache) Get(id int) (string, error) {
 		if e != nil {
 			return "", e
 		}
+		cs.lock.RUnlock()
+		cs.lock.Lock()
 		(*(cs.cache))[id] = v1
+		cs.lock.Unlock()
 		return v1, nil
 	}
-
+	cs.lock.RUnlock()
 	return v, nil
 }
 
@@ -51,7 +53,7 @@ func InitCache(updatePeriod int, f Fetcher, name string) Cacher {
 
 	c := cache{fetcher: f, name: name}
 	for k := range c.cache {
-		c.cache[k] = cacheShard{lock: new(sync.Mutex), cache: new(map[int]string)}
+		c.cache[k] = cacheShard{lock: new(sync.RWMutex), cache: new(map[int]string)}
 	}
 	ticker := time.NewTicker(time.Duration(updatePeriod) * time.Millisecond)
 

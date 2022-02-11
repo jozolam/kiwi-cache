@@ -18,20 +18,20 @@ func main() {
 	defer sqliteDatabase.Close()
 	currencyCache := cache_impl.InitCache(1000, &fetcher.CurrencyFetcher{DB: sqliteDatabase}, "currencyCache")
 
-	for i := 0; i < 1000000; i++ {
+	for i := 0; i < 100; i++ {
 		go func() {
 			//index := i
-			_, e := countryCache.Get(2208)
+			v1, e := countryCache.Get(2208)
 			if e != nil {
 				fmt.Println(e)
 			}
-			//fmt.Println(index, " country value is ", v)
+			fmt.Println(" country value is ", v1)
 
-			_, e1 := currencyCache.Get(979)
+			v2, e1 := currencyCache.Get(979)
 			if e1 != nil {
 				fmt.Println(e1)
 			}
-			//fmt.Println(index, " currency value is ", v1)
+			fmt.Println(" currency value is ", v2)
 		}()
 	}
 
